@@ -31,6 +31,12 @@ public class DispatchCenter {
     }
 
     public void placeOrder(Package pkg) {
+        if (pkg == null) {
+            throw new IllegalArgumentException("Package cannot be null");
+        }
+        if (packages.containsKey(pkg.getId())) {
+            throw new IllegalArgumentException("Package ID already exists: " + pkg.getId());
+        }
         packages.put(pkg.getId(), pkg);
         pendingPackages.offer(pkg);
         System.out.println("Order placed: " + pkg.getId());
@@ -39,6 +45,12 @@ public class DispatchCenter {
     }
 
     public void registerRider(Rider rider) {
+        if (rider == null) {
+            throw new IllegalArgumentException("Rider cannot be null");
+        }
+        if (riders.containsKey(rider.getId())) {
+            throw new IllegalArgumentException("Rider ID already exists: " + rider.getId());
+        }
         riders.put(rider.getId(), rider);
         System.out.println("Rider registered: " + rider.getId());
         auditTrail.log("Rider registered: " + rider.getId());
@@ -46,6 +58,13 @@ public class DispatchCenter {
     }
 
     public void updateRiderStatus(String riderId, RiderStatus status) {
+        if (riderId == null || riderId.isEmpty()) {
+            throw new IllegalArgumentException("Rider ID cannot be null or empty");
+        }
+        if (status == null) {
+            throw new IllegalArgumentException("RiderStatus cannot be null");
+        }
+
         Rider rider = riders.get(riderId);
         if (rider != null) {
             rider.setRiderStatus(status);
@@ -54,6 +73,8 @@ public class DispatchCenter {
             if (status == RiderStatus.AVAILABLE) {
                 assignPackage();
             }
+        } else {
+             throw new IllegalArgumentException("Rider not found: " + riderId);
         }
     }
 
@@ -85,9 +106,15 @@ public class DispatchCenter {
     }
 
     public void completeDelivery(String packageId) {
+        if (packageId == null || packageId.isEmpty()) {
+            throw new IllegalArgumentException("Package ID cannot be null or empty");
+        }
         Package pkg = packages.get(packageId);
-        if (pkg == null || pkg.getPackageStatus() != PackageStatus.ASSIGNED) {
-            return;
+        if (pkg == null) {
+            throw new IllegalArgumentException("Package not found: " + packageId);
+        }
+        if (pkg.getPackageStatus() != PackageStatus.ASSIGNED) {
+            throw new IllegalStateException("Package is not assigned: " + packageId);
         }
 
         pkg.setPackageStatus(PackageStatus.DELIVERED);
@@ -118,5 +145,9 @@ public class DispatchCenter {
 
     public List<String> getAuditLog() {
         return auditTrail.getLogs();
+    }
+
+    public Assignment getAssignment(String p1) {
+        return assignments.get(p1);
     }
 }
